@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:html';
 import 'dart:math' as Math;
 import 'package:three/three.dart';
@@ -22,6 +23,15 @@ class Canvas_Geometry_Cube
   num windowHalfX;
   num windowHalfY;
 
+  StreamSubscription<MouseEvent> mouseDownStream;
+  StreamSubscription<MouseEvent> mouseMoveStream;
+  StreamSubscription<MouseEvent> mouseUpStream;
+  StreamSubscription<MouseEvent> mouseOutStream;
+  StreamSubscription<TouchEvent> touchStartStream;
+  StreamSubscription<TouchEvent> touchMoveStream;
+
+
+
   Canvas_Geometry_Cube()
   {
 
@@ -30,7 +40,7 @@ class Canvas_Geometry_Cube
   void run()
   {
     init();
-    animate();
+    animate(0);
   }
 
   void init()
@@ -92,20 +102,21 @@ class Canvas_Geometry_Cube
     //container.appendChild( renderer.domElement );
     container.nodes.add( renderer.domElement );
 
-    document.on.mouseDown.add(onDocumentMouseDown);
-    document.on.touchStart.add(onDocumentTouchStart);
-    document.on.touchMove.add(onDocumentTouchMove);
+    mouseDownStream = document.onMouseDown.listen(onDocumentMouseDown);
+    touchStartStream = document.onTouchStart.listen(onDocumentTouchStart);
+    touchMoveStream = document.onTouchMove.listen(onDocumentTouchMove);
 
-    window.setInterval(() => animate(), 10);
+    //window.setInterval(() => animate(), 10);
+    window.requestAnimationFrame(animate);
   }
 
   void onDocumentMouseDown( event )
   {
     event.preventDefault();
 
-    document.on.mouseMove.add(onDocumentMouseMove);
-    document.on.mouseUp.add(onDocumentMouseUp);
-    document.on.mouseOut.add(onDocumentMouseOut);
+    mouseMoveStream = document.onMouseMove.listen(onDocumentMouseMove);
+    mouseUpStream = document.onMouseUp.listen(onDocumentMouseUp);
+    mouseOutStream = document.onMouseOut.listen(onDocumentMouseOut);
 
     mouseXOnMouseDown = event.clientX - windowHalfX;
     targetRotationOnMouseDown = targetRotation;
@@ -125,16 +136,16 @@ class Canvas_Geometry_Cube
   void onDocumentMouseUp( event )
   {
     print('onDocumentMouseUp');
-    document.on.mouseMove.remove(onDocumentMouseMove);
-    document.on.mouseUp.remove(onDocumentMouseUp);
-    document.on.mouseOut.remove(onDocumentMouseOut);
+    mouseMoveStream.cancel();
+    mouseUpStream.cancel();
+    mouseOutStream.cancel();
   }
 
   void onDocumentMouseOut( event )
   {
-    document.on.mouseMove.remove(onDocumentMouseMove);
-    document.on.mouseUp.remove(onDocumentMouseUp);
-    document.on.mouseOut.remove(onDocumentMouseOut);
+    mouseMoveStream.cancel();
+    mouseUpStream.cancel();
+    mouseOutStream.cancel();
   }
 
   void onDocumentTouchStart( event )
@@ -160,7 +171,7 @@ class Canvas_Geometry_Cube
   }
 
 
-  void animate()
+  void animate(t)
   {
 //    window.webkitRequestAnimationFrame(animate);
 //    print('win dynamic ${window.dynamic['requestAnimationFrame']}');
